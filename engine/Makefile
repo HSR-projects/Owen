@@ -5,9 +5,10 @@ CXX      ?= g++
 CC       ?= gcc
 NVCC     ?= nvcc
 ARCH     ?= -march=native            # override for portable/cross builds (e.g. -mavx2)
+DEFS     ?=                          # extra -D defines (Windows static link sets -DDLL_EXPORT)
 LDEXTRA  ?=                          # extra link flags (e.g. -static for Windows)
-CXXFLAGS ?= -std=c++20 -O3 $(ARCH) -DNDEBUG -Wall -Wextra -pthread -Isrc/syzygy
-CFLAGS   ?= -O3 $(ARCH) -DNDEBUG -pthread -Isrc/syzygy
+CXXFLAGS ?= -std=c++20 -O3 $(ARCH) $(DEFS) -DNDEBUG -Wall -Wextra -pthread -Isrc/syzygy
+CFLAGS   ?= -O3 $(ARCH) $(DEFS) -DNDEBUG -pthread -Isrc/syzygy
 .SUFFIXES:
 .DEFAULT_GOAL := all
 SRC      := $(wildcard src/*.cpp) $(wildcard src/sfnnue/*.cpp)
@@ -45,11 +46,13 @@ endif
 win:
 	$(MAKE) clean
 	$(MAKE) CXX=x86_64-w64-mingw32-g++ CC=x86_64-w64-mingw32-gcc \
-	        ARCH="-mavx2" LDEXTRA="-static -static-libgcc -static-libstdc++" BIN=owen.exe
+	        ARCH="-mavx2" DEFS="-DDLL_EXPORT" \
+	        LDEXTRA="-static -static-libgcc -static-libstdc++" BIN=owen.exe
 
 # Windows build run natively under MSYS2/MinGW (used by CI on a Windows runner).
 win-native:
-	$(MAKE) ARCH="-mavx2" LDEXTRA="-static -static-libgcc -static-libstdc++" BIN=owen.exe
+	$(MAKE) ARCH="-mavx2" DEFS="-DDLL_EXPORT" \
+	        LDEXTRA="-static -static-libgcc -static-libstdc++" BIN=owen.exe
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
